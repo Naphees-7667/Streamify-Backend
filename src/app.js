@@ -10,4 +10,12 @@ app.use(express.json());//used for req.body
 app.use(express.urlencoded({ extended: true }));//handle something from url
 app.use(express.static("public"));//public assests which we store in our assests from taking from server and accessible to everywhere in our project
 
+
+//routes
+import userRoutes from "./routes/user.routes.js";
+
+
+//routes declaration
+app.use("/api/v1/users", userRoutes);
+
 export { app }
