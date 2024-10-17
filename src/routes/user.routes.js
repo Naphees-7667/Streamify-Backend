@@ -2,7 +2,7 @@ import { Router } from "express";
 const router = Router();
 import User from "../models/user.model.js";
 import { registerUser } from "../controllers/user.controller.js";
-import {upload} from "../middlewares/multer.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 router.route("/register").post(
     upload.fields([
@@ -10,6 +10,6 @@ router.route("/register").post(
         { name: "cover", maxCount: 1 },
     ]),
     registerUser
-    );
+);
 
-export default router
+export default router;
