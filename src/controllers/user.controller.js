@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+
 const generateAccessAndRefreshToken = async(userId) => {
     try{
         const user = await User.findById(userId);
@@ -164,9 +165,72 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user?._id);
+    const isPasswordMatch = await user.matchPassword(currentPassword);
+    if (!isPasswordMatch) {
+        throw new ApiError(401, "Current password is incorrect");
+    }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, null, "Password changed successfully"));
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res.status(200).json(new ApiResponse(200,req.user, "current user fetched successfully"));
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body;
+    if (!fullName || !email) {
+        throw new ApiError(400, "fullName or email is required");
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id
+        , {
+            $set: {
+                fullName,
+                email
+            }
+        },
+        {
+            new: true,
+        }
+    ).select("-password -refreshToken");
+    return res.status(200).json(new ApiResponse(200, null, "Account details updated successfully"));
+})
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.files?.path;
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing");
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if(!avatar.url){
+        throw new ApiError(500, "Avatar upload failed");
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id
+        , {
+            $set: {
+                avatar
+            }
+        },
+        {
+            new: true,
+        }
+    ).select("-password -refreshToken");
+    return res.status(200).json(new ApiResponse(200, null, "Avatar updated successfully"));
+})
+
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar
 }
